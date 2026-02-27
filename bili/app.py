@@ -122,7 +122,7 @@ def main() -> None:
 
     cfg_cache = bool(config.get("cache", True))
     cfg_cache_ttl = int(config.get("cache_ttl_minutes", 60))
-    cfg_auto_save_auth = bool(config.get("auto_save_auth", config.get("auto_save_records", False)))
+    cfg_auto_save_auth = bool(config.get("auto_save_auth", False))
     cache_enabled = cfg_cache
     if args.cache:
         cache_enabled = True
