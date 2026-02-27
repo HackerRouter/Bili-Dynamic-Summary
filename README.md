@@ -4,6 +4,8 @@
 
 A prompt_toolkit-based TUI tool that fetches, filters, sorts, and summarizes personalized Bilibili dynamics (videos, posts, articles, etc.) in a selected time range via web cookie-authenticated APIs.
 
+![demo](demo.png)
+
 ## Features
 - Time range filter (custom / last 24 hours / 7 days / 30 days / 365 days / this year / unlimited)
 - Keyword filter (space-separated terms, AND logic)
