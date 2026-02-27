@@ -37,8 +37,8 @@ You can also pass a full cookie string:
 python BiliDynamicSummary.py --cookie "YOUR_FULL_COOKIE"
 ```
 
-## How To Get Cookie
-Using Google Chrome on Windows as an example:
+## How To Get Web Cache Data
+Using Google Chrome on Windows environment as an example:
 
 ### Get `SESSDATA`
 1. Open https://t.bilibili.com/

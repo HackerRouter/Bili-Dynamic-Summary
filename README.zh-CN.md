@@ -37,7 +37,7 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 python BiliDynamicSummary.py --cookie "你的完整 Cookie"
 ```
 
-## 获取 Cookie 的方式
+## 获取网页缓存数据的方式
 以 Windows 环境下， Google Chrome 为例：
 
 ### 获取 SESSDATA
