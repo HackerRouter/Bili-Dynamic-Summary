@@ -4,6 +4,7 @@
 
 A prompt_toolkit-based TUI tool that fetches, filters, sorts, and summarizes personalized Bilibili dynamics (videos, posts, articles, etc.) in a selected time range via web cookie-authenticated APIs.
 
+![demo0](demo0.png)
 ![demo](demo.png)
 
 ## Features

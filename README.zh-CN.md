@@ -2,8 +2,9 @@
 
 [English README](README.md)
 
-一个通过 网页缓存数据 获取、分类、排序、AI总结 指定时间内 个性化B站动态（视频、图文、专栏等），基于 prompt_toolkit 的 TUI 工具。
+一个通过 网页缓存数据 获取、分类、排序、AI总结 指定时间内 个性化B站动态（视频、图文、专栏等），基于 `prompt_toolkit` 的 TUI 工具。
 
+![demo0](demo0.png)
 ![demo](demo.png)
 
 ## 功能
@@ -28,22 +29,22 @@ python -m pip install requests prompt_toolkit
 
 ## 快速开始
 ```powershell
-python BiliDynamicSummary.py --sessdata "你的SESSDATA"
+python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 ```
 
 也可以传入完整 Cookie：
 ```powershell
-python BiliDynamicSummary.py --cookie "你的完整Cookie"
+python BiliDynamicSummary.py --cookie "你的完整 Cookie"
 ```
 
-## 获取Cookie的方式
+## 获取 Cookie 的方式
 以 Windows 环境下， Google Chrome 为例：
 
 ### 获取 SESSDATA
 1. 打开 https://t.bilibili.com/
 2. 按 F12 打开开发者工具，选中 More tabs 里的 Application
 3. 可找到 Cookies 下名为 https://t.bilibili.com 的项
-4. 选中后，其中有一项为 SESSDATA ，复制即可
+4. 选中后，其中有一项为 SESSDATA，复制即可
 
 ### 获取 Cookie
 1. 打开 https://t.bilibili.com/
@@ -59,7 +60,7 @@ python BiliDynamicSummary.py --cookie "你的完整Cookie"
 ## 使用流程
 0. 在终端输入
 ```powershell
-python BiliDynamicSummary.py --sessdata "你的SESSDATA"
+python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 ```
 1. 进入 **当前设置** 页面
 2. 选择 **编辑设置**（可选）
@@ -184,7 +185,7 @@ python BiliDynamicSummary.py --sessdata "你的SESSDATA"
 
 ## 免责声明
 - 本工具仅供个人学习、研究与合法用途。
-- 使用者需自行确保符合 B站 服务条款及所在地法律法规。
+- 使用者需自行确保符合 B 站 服务条款及所在地法律法规。
 - 请妥善保管敏感信息（`cookie`、`sessdata`、API 密钥），避免泄露或提交到公开仓库。
 - AI 总结可能存在遗漏或错误，请以原始动态内容为准。
 
