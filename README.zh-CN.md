@@ -85,7 +85,7 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 - `cache`: 是否启用缓存
 - `cache_ttl`: 缓存有效期（分钟）
 - `summary_provider`: `local` / `openai` / `gemini` / `custom_openai`
-- `summary_api_mode`: `chat_completions` / `responses`（OpenAI兼容提供方）
+- `summary_api_mode`: `chat_completions` / `responses`（OpenAI 兼容提供方）
 - `summary_model`: 对应提供方模型名
 - `summary_api_key`: API 密钥（`local` 可留空）
 - `summary_base_url`: `custom_openai` 使用的基础地址
@@ -136,8 +136,8 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 - `cache`：`true` 或 `false`。控制是否读写本地缓存
 - `cache_ttl_minutes`：缓存有效期（分钟），`<= 0` 表示不做过期判断
 - `auto_save_auth`：自动把最新 `cookie`/`sessdata` 写回 `config.json`（默认 `false`）
-- `summary.provider`：`local` | `openai` | `gemini` | `custom_openai` （OpenAI兼容）
-- `summary.api_mode`：`chat_completions` | `responses`（OpenAI兼容提供方）
+- `summary.provider`：`local` | `openai` | `gemini` | `custom_openai` （OpenAI 兼容）
+- `summary.api_mode`：`chat_completions` | `responses`（OpenAI 兼容提供方）
 - `summary.model`：对应提供方模型名，例如 `gpt-4o-mini`、`gemini-1.5-flash`
 - `summary.api_key`：`openai` 或 `gemini` 使用的 API 密钥
 - `summary.base_url`：`custom_openai` 的基础地址（OpenAI 兼容接口），例如 `https://api.xxx.com/v1`
@@ -145,6 +145,19 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 - `summary.extra_headers`：将 JSON 对象合并到 AI 请求头中，例如 `{"x-channel":"kiro"}`
 - `summary.max_items`：AI 总结时最多使用的动态条数
 - `summary.timeout_seconds`：AI 总结 HTTP 请求超时秒数
+
+### `config.json` 自定义 API 举例：
+```json
+{
+"summary": {
+    "provider": "custom_openai",
+    "api_mode": "chat_completions",
+    "model": "gemini-3.1-pro-preview",
+    "api_key": "API_KEY",
+    "base_url": "http://localhost:3000/v1"
+}
+}
+```
 
 ## 命令行参数
 ```text
@@ -193,3 +206,5 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 
 我写这个应用程序的唯一原因是为了跟上中国 Minecraft 技术社区的步伐，因为我已经忘记我的 Bilibili 帐户密码很多年了。
 :P
+
+至于这句话为什么要用谷歌翻译我也不知道（挠头）。

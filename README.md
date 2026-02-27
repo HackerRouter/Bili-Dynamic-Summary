@@ -148,6 +148,19 @@ Cache files are stored in `cache/`. You can configure in TUI or `config.json`:
 - `summary.max_items`: max dynamics used by AI summary.
 - `summary.timeout_seconds`: AI summary HTTP timeout in seconds.
 
+### `config.json` Custom API Example：
+```json
+{
+"summary": {
+    "provider": "custom_openai",
+    "api_mode": "chat_completions",
+    "model": "gemini-3.1-pro-preview",
+    "api_key": "API_KEY",
+    "base_url": "http://localhost:3000/v1"
+}
+}
+```
+
 ## CLI Options
 ```text
 --cookie         Full cookie string
