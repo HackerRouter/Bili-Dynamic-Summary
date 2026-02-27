@@ -157,7 +157,7 @@ Cache files are stored in `cache/`. You can configure in TUI or `config.json`:
     "model": "gemini-3.1-pro-preview",
     "api_key": "API_KEY",
     "base_url": "http://localhost:3000/v1"
-}
+  }
 }
 ```
 

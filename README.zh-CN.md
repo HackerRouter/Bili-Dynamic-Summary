@@ -155,7 +155,7 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
     "model": "gemini-3.1-pro-preview",
     "api_key": "API_KEY",
     "base_url": "http://localhost:3000/v1"
-}
+  }
 }
 ```
 
