@@ -44,8 +44,8 @@ python BiliDynamicSummary.py --cookie "你的完整 Cookie"
 ### 获取 SESSDATA
 1. 打开 https://t.bilibili.com/
 2. 按 F12 打开开发者工具，选中 More tabs 里的 Application
-3. 可找到 Cookies 下名为 https://t.bilibili.com 的项
-4. 选中后，其中有一项为 SESSDATA，复制即可
+3. 找到 Cookies 下名为 https://t.bilibili.com 的项
+4. 选中后，复制 SESSDATA
 
 ### 获取 Cookie
 1. 打开 https://t.bilibili.com/
@@ -120,7 +120,6 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
   "defaults": {
     "type": "all",
     "query_mode": "all",
-    "target_up_mid": "",
     "target_up_mids": "",
     "up_filter_keyword": "",
     "pages": 5,
@@ -164,10 +163,9 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 - `cache`：`true` 或 `false`。控制是否读写本地缓存
 - `cache_ttl_minutes`：缓存有效期（分钟），`<= 0` 表示不做过期判断
 - `auto_save_auth`：自动把最新 `cookie`/`sessdata` 写回 `config.json`（默认 `false`）
-- `defaults.*`：当未传对应命令行参数时，作为 TUI/CLI 的启动默认值
+- `defaults.*`：当未传对应命令行参数时，作为 TUI 的启动默认值
 - `defaults.type`：`all` | `video` | `pgc` | `article`
-- `defaults.query_mode`：`all` | `selected_up`（向后兼容 `single_up`）
-- `defaults.target_up_mid`：旧版单一目标 `mid`，仅用于兼容
+- `defaults.query_mode`：`all` | `selected_up`
 - `defaults.target_up_mids`：`selected_up` 模式目标 UP 列表（逗号分隔）
 - 当 `query_mode=selected_up` 且 `target_up_mids` 为空时，程序会自动先检索全部关注 UP，并弹出目标 UP 多选（可用 `[跳过并回设置页]` 退出）。
 - `defaults.up_filter_keyword`：选择 UP 主界面的关键词筛选记忆值（程序会自动更新）
@@ -209,15 +207,14 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 
 ---
 
-## CLI 命令行参数
+## 命令行参数
 ```text
 --cookie         完整 Cookie 字符串
 --sessdata       SESSDATA 值
 --dedeuserid     DedeUserID 值（mid）
 --bili-jct       bili_jct 值（CSRF）
 --type           all | video | pgc | article
---query-mode     all | selected_up | single_up
---target-up-mid  兼容旧版的单目标 UP mid
+--query-mode     all | selected_up
 --target-up-mids selected_up 模式目标 UP mids（逗号分隔）
 --pages          最大翻页数
 --page-size      列表每页条数

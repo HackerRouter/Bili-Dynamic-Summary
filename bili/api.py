@@ -301,7 +301,7 @@ def _cache_key(settings: Dict[str, Any]) -> str:
         [
             str(settings.get("type") or ""),
             str(settings.get("query_mode") or ""),
-            str(settings.get("target_up_mids") or settings.get("target_up_mid") or ""),
+            str(settings.get("target_up_mids") or ""),
             str(settings.get("pages") or ""),
             str(settings.get("endpoint") or ""),
             str(settings.get("features") or ""),
@@ -467,8 +467,6 @@ def fetch_dynamics(
 
     if not collected:
         raw_mode = (query_mode or "all").strip().lower()
-        if raw_mode == "single_up":
-            raw_mode = "selected_up"
         target_mid_set = {x.strip() for x in str(target_up_mids or "").replace(";", ",").split(",") if x.strip()}
         use_selected_up = raw_mode == "selected_up" and bool(target_mid_set)
         offset = ""

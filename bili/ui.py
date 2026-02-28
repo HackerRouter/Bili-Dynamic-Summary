@@ -264,7 +264,6 @@ def view_label(value: str) -> str:
 def query_mode_label(value: str) -> str:
     mapping = {
         "all": t("query_mode_all"),
-        "single_up": t("query_mode_selected_up"),
         "selected_up": t("query_mode_selected_up"),
     }
     return mapping.get((value or "all").lower(), value or "all")
@@ -302,7 +301,7 @@ def settings_summary(settings: Dict[str, Any]) -> str:
     lines = [
         t("summary_type", value=type_label(settings.get("type"))),
         t("summary_query_mode", value=query_mode_label(settings.get("query_mode"))),
-        t("summary_target_up_mids", value=settings.get("target_up_mids") or settings.get("target_up_mid") or "-"),
+        t("summary_target_up_mids", value=settings.get("target_up_mids") or "-"),
         t("summary_pages", value=settings.get("pages")),
         t("summary_page_size", value=settings.get("page_size")),
         t("summary_sort", value=sort_label(settings.get("sort"))),
@@ -359,11 +358,10 @@ def edit_settings(settings: Dict[str, Any]) -> Dict[str, Any]:
     target_up_mids = input_text(
         t("edit_target_up_mids_title"),
         t("edit_target_up_mids_prompt"),
-        str(settings.get("target_up_mids") or settings.get("target_up_mid") or ""),
+        str(settings.get("target_up_mids") or ""),
     ).strip()
     target_up_mids = _normalize_mid_list(target_up_mids)
     settings["target_up_mids"] = target_up_mids
-    settings["target_up_mid"] = target_up_mids.split(",")[0] if target_up_mids else ""
 
     current_sort = sort_label(settings.get("sort"))
     sort_choice = choose_from_list(

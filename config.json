@@ -9,7 +9,6 @@
   "defaults": {
     "type": "all",
     "query_mode": "all",
-    "target_up_mid": "",
     "target_up_mids": "",
     "up_filter_keyword": "",
     "pages": 20,

@@ -122,7 +122,6 @@ Cache files are stored in `cache/`. You can configure in TUI or `config.json`:
   "defaults": {
     "type": "all",
     "query_mode": "all",
-    "target_up_mid": "",
     "target_up_mids": "",
     "up_filter_keyword": "",
     "pages": 5,
@@ -166,10 +165,9 @@ Cache files are stored in `cache/`. You can configure in TUI or `config.json`:
 - `cache`: `true` or `false`, controls local cache read/write.
 - `cache_ttl_minutes`: cache validity in minutes; `<= 0` means no expiration check.
 - `auto_save_auth`: auto-write latest `cookie`/`sessdata` back into `config.json` (default `false`).
-- `defaults.*`: startup defaults for TUI/CLI when related flags are not passed.
+- `defaults.*`: startup defaults for TUI when related flags are not passed.
 - `defaults.type`: `all` | `video` | `pgc` | `article`.
-- `defaults.query_mode`: `all` | `selected_up` (`single_up` is also accepted for backward compatibility).
-- `defaults.target_up_mid`: legacy single target `mid` for backward compatibility.
+- `defaults.query_mode`: `all` | `selected_up`.
 - `defaults.target_up_mids`: target UP `mid` list (comma-separated) used in `selected_up` mode.
 - If `query_mode=selected_up` and `target_up_mids` is empty, the app auto-fetches all followed UPs and opens a multi-select target picker (with a skip-to-settings button).
 - `defaults.up_filter_keyword`: remembered keyword filter value used in the UP selector (auto-updated by the app).
@@ -211,15 +209,14 @@ Cache files are stored in `cache/`. You can configure in TUI or `config.json`:
 
 ---
 
-## CLI Options
+## Command-line Options
 ```text
 --cookie         Full cookie string
 --sessdata       SESSDATA value
 --dedeuserid     DedeUserID value (mid)
 --bili-jct       bili_jct value (CSRF)
 --type           all | video | pgc | article
---query-mode     all | selected_up | single_up
---target-up-mid  Legacy single target UP mid (compatible)
+--query-mode     all | selected_up
 --target-up-mids Target UP mids for selected_up mode, comma-separated
 --pages          Max pages to fetch
 --page-size      Items per page in list view

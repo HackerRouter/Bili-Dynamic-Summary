@@ -12,7 +12,6 @@ from .constants import (
     DEFAULT_REQUEST_RETRY_BACKOFF_FACTOR,
     DEFAULT_REQUEST_RETRY_BACKOFF_SECONDS,
     DEFAULT_SORT,
-    DEFAULT_TARGET_UP_MID,
     DEFAULT_TARGET_UP_MIDS,
     DEFAULT_UP_FILTER_KEYWORD,
     DEFAULT_TIMEOUT_SECONDS,
@@ -129,8 +128,7 @@ def main() -> None:
     parser.add_argument("--dedeuserid", default="", help="DedeUserID cookie value (mid).")
     parser.add_argument("--bili-jct", default="", help="bili_jct cookie value (CSRF).")
     parser.add_argument("--type", choices=["all", "video", "pgc", "article"], default="", help="Dynamic feed type.")
-    parser.add_argument("--query-mode", choices=["all", "selected_up", "single_up"], default="", help="Query mode.")
-    parser.add_argument("--target-up-mid", default="", help="Legacy single target UP mid (compatible).")
+    parser.add_argument("--query-mode", choices=["all", "selected_up"], default="", help="Query mode.")
     parser.add_argument("--target-up-mids", default="", help="Target UP mids for selected_up mode, comma-separated.")
     parser.add_argument("--pages", type=int, default=0, help="Max pages to fetch.")
     parser.add_argument("--interactive", action="store_true", default=None, help="Prompt before fetching next page.")
@@ -227,14 +225,9 @@ def main() -> None:
     if default_type not in {"all", "video", "pgc", "article"}:
         default_type = "all"
     default_query_mode = str(defaults_cfg.get("query_mode") or DEFAULT_QUERY_MODE).strip().lower()
-    if default_query_mode == "single_up":
-        default_query_mode = "selected_up"
     if default_query_mode not in {"all", "selected_up"}:
         default_query_mode = DEFAULT_QUERY_MODE
-    default_target_up_mid = str(defaults_cfg.get("target_up_mid") or DEFAULT_TARGET_UP_MID).strip()
-    default_target_up_mids = _normalize_mid_list(
-        str(defaults_cfg.get("target_up_mids") or DEFAULT_TARGET_UP_MIDS).strip() or default_target_up_mid
-    )
+    default_target_up_mids = _normalize_mid_list(str(defaults_cfg.get("target_up_mids") or DEFAULT_TARGET_UP_MIDS).strip())
     default_up_filter_keyword = str(defaults_cfg.get("up_filter_keyword") or DEFAULT_UP_FILTER_KEYWORD).strip()
     default_pages = _as_int(defaults_cfg.get("pages"), DEFAULT_PAGES, minimum=1)
     default_interactive = _as_bool(defaults_cfg.get("interactive"), False)
@@ -275,16 +268,11 @@ def main() -> None:
 
     dynamic_type = args.type.strip() if args.type else default_type
     query_mode = args.query_mode.strip() if args.query_mode else default_query_mode
-    if query_mode == "single_up":
-        query_mode = "selected_up"
     if query_mode not in {"all", "selected_up"}:
         query_mode = default_query_mode
     target_up_mids = _normalize_mid_list(
-        args.target_up_mids.strip()
-        if args.target_up_mids
-        else (args.target_up_mid.strip() if args.target_up_mid else default_target_up_mids)
+        args.target_up_mids.strip() if args.target_up_mids else default_target_up_mids
     )
-    target_up_mid = target_up_mids.split(",")[0].strip() if target_up_mids else default_target_up_mid
     pages = max(1, args.pages) if args.pages > 0 else default_pages
     interactive = bool(args.interactive) if args.interactive is not None else default_interactive
     endpoint = args.endpoint.strip() if args.endpoint else default_endpoint
@@ -365,7 +353,6 @@ def main() -> None:
         "bili_jct": args.bili_jct,
         "type": dynamic_type,
         "query_mode": query_mode,
-        "target_up_mid": target_up_mid,
         "target_up_mids": target_up_mids,
         "up_filter_keyword": default_up_filter_keyword,
         "pages": pages,
@@ -473,7 +460,6 @@ def main() -> None:
                     continue
                 settings["query_mode"] = "selected_up"
                 settings["target_up_mids"] = selected_mids
-                settings["target_up_mid"] = selected_mids.split(",")[0]
                 print(t("target_up_mids_applied", mids=selected_mids))
                 target_set = {x.strip() for x in selected_mids.split(",") if x.strip()}
                 items = [x for x in all_items if str(x.get("user_mid") or "") in target_set]
@@ -485,7 +471,7 @@ def main() -> None:
                     sort_order=settings.get("sort") or "desc",
                     view_mode=settings.get("view") or "summary",
                     page_size=max(1, int(settings.get("page_size") or DEFAULT_PAGE_SIZE)),
-                    current_target_up_mids=str(settings.get("target_up_mids") or settings.get("target_up_mid") or ""),
+                    current_target_up_mids=str(settings.get("target_up_mids") or ""),
                     current_up_filter_keyword=str(settings.get("up_filter_keyword") or ""),
                     summary_options={
                         "provider": settings.get("summary_provider") or "local",
@@ -508,7 +494,6 @@ def main() -> None:
                     if target_mids:
                         settings["query_mode"] = "selected_up"
                         settings["target_up_mids"] = target_mids
-                        settings["target_up_mid"] = target_mids.split(",")[0]
                         print(t("target_up_mids_applied", mids=target_mids))
                 continue
             back = show_done_dialog()
