@@ -172,7 +172,7 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 - 当 `query_mode=selected_up` 且 `target_up_mids` 为空时，程序会自动先检索全部关注 UP，并弹出目标 UP 多选（可用 `[跳过并回设置页]` 退出）。
 - `defaults.up_filter_keyword`：选择 UP 主界面的关键词筛选记忆值（程序会自动更新）
 - `defaults.pages`：默认最大抓取页数
-- `defaults.interactive`：抓下一页前是否询问
+- `defaults.interactive`：抓取下一页前是否询问
 - `defaults.endpoint` / `defaults.features` / `defaults.web_location`：动态接口请求参数
 - `defaults.timeout_seconds`：动态接口超时秒数
 - `defaults.time_from` / `defaults.time_to`：默认时间范围
@@ -182,8 +182,8 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 - `defaults.keyword`：默认关键词过滤
 - `fetch.request_interval_seconds`：分页请求间隔秒数
 - `fetch.max_retries`：单页请求失败重试次数
-- `fetch.retry_backoff_seconds`：首次重试退避秒数
-- `fetch.retry_backoff_factor`：重试退避倍数（>= 1.0）
+- `fetch.retry_backoff_seconds`：首次重试中断秒数
+- `fetch.retry_backoff_factor`：重试中断倍数（>= 1.0）
 - `summary.provider`：`local` | `openai` | `gemini` | `custom_openai` （OpenAI 兼容）
 - `summary.api_mode`：`chat_completions` | `responses`（OpenAI 兼容提供方）
 - `summary.model`：对应提供方模型名，例如 `gpt-4o-mini`、`gemini-1.5-flash`
