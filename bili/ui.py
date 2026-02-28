@@ -11,6 +11,34 @@ from .i18n import t
 _UI_WRAP_WIDTH = 76
 
 
+def _normalize_mid_list(raw: str) -> str:
+    text = (raw or "").replace(";", ",").replace("|", ",").replace("\n", ",").replace(" ", ",")
+    mids = []
+    seen = set()
+    for part in text.split(","):
+        mid = part.strip()
+        if not mid or mid in seen:
+            continue
+        seen.add(mid)
+        mids.append(mid)
+    return ",".join(mids)
+
+
+def _match_up_keyword(name: str, mid: str, keyword: str) -> bool:
+    kw = (keyword or "").strip().lower()
+    if not kw:
+        return True
+    text = f"{name or ''} {mid or ''}".lower()
+    terms = [x for x in kw.split() if x]
+    return all(term in text for term in terms)
+
+
+def _filter_user_list(user_list: List[Tuple[str, str, int]], keyword: str) -> List[Tuple[str, str, int]]:
+    if not (keyword or "").strip():
+        return user_list
+    return [x for x in user_list if _match_up_keyword(x[1], x[0], keyword)]
+
+
 def set_ui_wrap_width(width: int) -> None:
     global _UI_WRAP_WIDTH
     try:
@@ -233,6 +261,15 @@ def view_label(value: str) -> str:
     return mapping.get(value, value)
 
 
+def query_mode_label(value: str) -> str:
+    mapping = {
+        "all": t("query_mode_all"),
+        "single_up": t("query_mode_selected_up"),
+        "selected_up": t("query_mode_selected_up"),
+    }
+    return mapping.get((value or "all").lower(), value or "all")
+
+
 def summary_provider_label(value: str) -> str:
     mapping = {
         "local": t("summary_provider_local"),
@@ -264,6 +301,8 @@ def _headers_preview(value: Any) -> str:
 def settings_summary(settings: Dict[str, Any]) -> str:
     lines = [
         t("summary_type", value=type_label(settings.get("type"))),
+        t("summary_query_mode", value=query_mode_label(settings.get("query_mode"))),
+        t("summary_target_up_mids", value=settings.get("target_up_mids") or settings.get("target_up_mid") or "-"),
         t("summary_pages", value=settings.get("pages")),
         t("summary_page_size", value=settings.get("page_size")),
         t("summary_sort", value=sort_label(settings.get("sort"))),
@@ -304,6 +343,27 @@ def edit_settings(settings: Dict[str, Any]) -> Dict[str, Any]:
     )
     if type_choice and type_choice != "keep":
         settings["type"] = type_choice
+
+    current_query_mode = query_mode_label(settings.get("query_mode"))
+    query_mode_choice = choose_from_list(
+        t("edit_query_mode_title"),
+        [
+            ("keep", t("action_keep_with", value=current_query_mode)),
+            ("all", t("query_mode_all")),
+            ("selected_up", t("query_mode_selected_up")),
+        ],
+    )
+    if query_mode_choice and query_mode_choice != "keep":
+        settings["query_mode"] = query_mode_choice
+
+    target_up_mids = input_text(
+        t("edit_target_up_mids_title"),
+        t("edit_target_up_mids_prompt"),
+        str(settings.get("target_up_mids") or settings.get("target_up_mid") or ""),
+    ).strip()
+    target_up_mids = _normalize_mid_list(target_up_mids)
+    settings["target_up_mids"] = target_up_mids
+    settings["target_up_mid"] = target_up_mids.split(",")[0] if target_up_mids else ""
 
     current_sort = sort_label(settings.get("sort"))
     sort_choice = choose_from_list(
@@ -706,7 +766,9 @@ def browse_users(
     view_mode: str,
     page_size: int,
     summary_options: Dict[str, Any],
-) -> str:
+    current_target_up_mids: str = "",
+    current_up_filter_keyword: str = "",
+) -> Tuple[str, str]:
     by_user: Dict[str, Dict[str, Any]] = {}
     for info in items:
         mid = str(info.get("user_mid") or "")
@@ -721,23 +783,57 @@ def browse_users(
 
     reverse = sort_order.lower() == "desc"
     user_list.sort(key=lambda x: x[2], reverse=reverse)
+    up_filter_keyword = str(current_up_filter_keyword or "").strip()
 
     while True:
+        filtered_user_list = _filter_user_list(user_list, up_filter_keyword)
         choices = []
-        for mid, name, count in user_list:
+        for mid, name, count in filtered_user_list:
             label = t("up_item_label", name=name, mid=mid, count=count)
             choices.append((mid, label))
+        if not filtered_user_list:
+            choices.append(("no_result", t("choose_up_filter_no_result")))
 
+        choices.append(("filter_up", t("action_filter_up_keyword")))
+        choices.append(("clear_filter_up", t("action_clear_up_keyword")))
+        choices.append(("set_target_up", t("action_set_target_ups")))
         choices.append(("back", t("action_back")))
         choices.append(("quit", t("action_quit")))
 
-        selected_mid = choose_from_list(t("choose_up_title"), choices, text=t("select_help"))
+        selected_mid = choose_from_list(
+            t("choose_up_title"),
+            choices,
+            text=t("choose_up_filter_hint", help=t("select_help"), keyword=up_filter_keyword or "-"),
+        )
+        if selected_mid == "filter_up":
+            up_filter_keyword = input_text(
+                t("choose_up_filter_title"),
+                t("choose_up_filter_prompt"),
+                up_filter_keyword,
+            ).strip()
+            continue
+        if selected_mid == "clear_filter_up":
+            up_filter_keyword = ""
+            continue
+        if selected_mid == "no_result":
+            continue
+        if selected_mid == "set_target_up":
+            target_mids, up_filter_keyword = _choose_target_up_mids_from_user_list(
+                user_list,
+                current_target_up_mids=current_target_up_mids,
+                initial_filter_keyword=up_filter_keyword,
+            )
+            if target_mids == "quit":
+                return "quit", up_filter_keyword
+            if target_mids and target_mids != "back":
+                return f"set_targets:{target_mids}", up_filter_keyword
+            continue
         if selected_mid == "back":
-            return "back"
+            return "back", up_filter_keyword
         if selected_mid == "quit":
-            return "quit"
+            return "quit", up_filter_keyword
         if not selected_mid:
-            return "back"
+            return "back", up_filter_keyword
 
         selected = by_user[selected_mid]
         user_items = selected["items"]
@@ -746,7 +842,7 @@ def browse_users(
         while True:
             result = _browse_user_items(user_items, view_mode=view_mode, page_size=page_size)
             if result == "quit":
-                return "quit"
+                return "quit", up_filter_keyword
             if result == "back":
                 break
             if result == "ai_summary":
@@ -756,7 +852,103 @@ def browse_users(
                     summary_options=summary_options,
                 )
                 if sub == "quit":
-                    return "quit"
+                    return "quit", up_filter_keyword
+
+
+def _choose_target_up_mids_from_user_list(
+    user_list: List[Tuple[str, str, int]],
+    current_target_up_mids: str = "",
+    initial_filter_keyword: str = "",
+) -> Tuple[str, str]:
+    selected_targets = set(
+        mid.strip()
+        for mid in _normalize_mid_list(current_target_up_mids).split(",")
+        if mid.strip()
+    )
+    up_filter_keyword = (initial_filter_keyword or "").strip()
+    while True:
+        filtered_user_list = _filter_user_list(user_list, up_filter_keyword)
+        target_choices: List[Tuple[str, str]] = []
+        for mid, name, count in filtered_user_list:
+            prefix = "[x]" if mid in selected_targets else "[ ]"
+            label = f"{prefix} {t('up_item_label', name=name, mid=mid, count=count)}"
+            target_choices.append((mid, label))
+        if not filtered_user_list:
+            target_choices.append(("no_result", t("choose_up_filter_no_result")))
+        target_choices.append(("filter_up", t("action_filter_up_keyword")))
+        target_choices.append(("clear_filter_up", t("action_clear_up_keyword")))
+        target_choices.append(("done", t("action_done")))
+        target_choices.append(("clear", t("action_clear_selection")))
+        target_choices.append(("skip", t("action_skip_to_settings")))
+        target_choices.append(("back", t("action_back")))
+        target_choices.append(("quit", t("action_quit")))
+        target_mid = choose_from_list(
+            t("choose_target_ups_title"),
+            target_choices,
+            text=t("choose_up_filter_hint", help=t("select_help"), keyword=up_filter_keyword or "-"),
+        )
+        if target_mid == "quit":
+            return "quit", up_filter_keyword
+        if target_mid == "filter_up":
+            up_filter_keyword = input_text(
+                t("choose_up_filter_title"),
+                t("choose_up_filter_prompt"),
+                up_filter_keyword,
+            ).strip()
+            continue
+        if target_mid == "clear_filter_up":
+            up_filter_keyword = ""
+            continue
+        if target_mid == "no_result":
+            continue
+        if target_mid == "skip":
+            return "skip", up_filter_keyword
+        if target_mid == "back":
+            return "back", up_filter_keyword
+        if target_mid == "clear":
+            selected_targets.clear()
+            continue
+        if target_mid == "done":
+            normalized = _normalize_mid_list(",".join(sorted(selected_targets)))
+            if not normalized:
+                _show_message(t("summary_notice_title"), t("target_up_mids_required"))
+                continue
+            return normalized, up_filter_keyword
+        if target_mid in selected_targets:
+            selected_targets.remove(target_mid)
+        else:
+            selected_targets.add(target_mid)
+
+
+def choose_target_up_mids(
+    items: List[Dict[str, Any]],
+    sort_order: str,
+    current_target_up_mids: str = "",
+    current_up_filter_keyword: str = "",
+) -> Tuple[str, str]:
+    by_user: Dict[str, Dict[str, Any]] = {}
+    for info in items:
+        mid = str(info.get("user_mid") or "")
+        name = info.get("user") or "-"
+        if not mid:
+            continue
+        if mid not in by_user:
+            by_user[mid] = {"name": name, "items": []}
+        by_user[mid]["items"].append(info)
+
+    user_list: List[Tuple[str, str, int]] = []
+    for mid, data in by_user.items():
+        user_list.append((mid, data["name"], len(data["items"])))
+    reverse = sort_order.lower() == "desc"
+    user_list.sort(key=lambda x: x[2], reverse=reverse)
+
+    if not user_list:
+        return "", current_up_filter_keyword
+    return _choose_target_up_mids_from_user_list(
+        user_list,
+        current_target_up_mids=current_target_up_mids,
+        initial_filter_keyword=current_up_filter_keyword,
+    )
 
 
 def parse_time_input(value: str, is_end: bool) -> int:

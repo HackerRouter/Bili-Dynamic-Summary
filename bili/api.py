@@ -300,6 +300,8 @@ def _cache_key(settings: Dict[str, Any]) -> str:
     raw = "|".join(
         [
             str(settings.get("type") or ""),
+            str(settings.get("query_mode") or ""),
+            str(settings.get("target_up_mids") or settings.get("target_up_mid") or ""),
             str(settings.get("pages") or ""),
             str(settings.get("endpoint") or ""),
             str(settings.get("features") or ""),
@@ -356,7 +358,54 @@ def fetch_page(
         "web_location": web_location,
     }
     resp = session.get(endpoint, params=params, timeout=timeout)
+    resp.raise_for_status()
     return resp.json()
+
+
+def _fetch_page_with_retry(
+    session: requests.Session,
+    endpoint: str,
+    dynamic_type: str,
+    offset: str,
+    update_baseline: str,
+    features: str,
+    web_location: str,
+    timeout: int,
+    retries: int,
+    retry_backoff: float,
+    retry_factor: float,
+) -> Dict[str, Any]:
+    retries = max(0, int(retries))
+    delay = max(0.0, float(retry_backoff))
+    factor = max(1.0, float(retry_factor))
+    max_attempts = retries + 1
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            data = fetch_page(
+                session=session,
+                endpoint=endpoint,
+                dynamic_type=dynamic_type,
+                offset=offset,
+                update_baseline=update_baseline,
+                features=features,
+                web_location=web_location,
+                timeout=timeout,
+            )
+        except Exception as exc:
+            if attempt >= max_attempts:
+                return {"code": -1, "message": str(exc)}
+        else:
+            if data.get("code") == 0:
+                return data
+            if attempt >= max_attempts:
+                return data
+
+        if delay > 0:
+            time.sleep(delay)
+            delay *= factor
+
+    return {"code": -1, "message": t("unknown_error")}
 
 
 def fetch_dynamics(
@@ -365,6 +414,8 @@ def fetch_dynamics(
     dedeuserid: str,
     bili_jct: str,
     dynamic_type: str,
+    query_mode: str,
+    target_up_mids: str,
     pages: int,
     interactive: bool,
     endpoint: str,
@@ -376,6 +427,10 @@ def fetch_dynamics(
     keyword: str,
     use_cache: bool,
     cache_ttl: int,
+    request_interval: float,
+    request_retries: int,
+    request_retry_backoff: float,
+    request_retry_factor: float,
 ) -> List[Dict[str, Any]]:
     cookies: Dict[str, str] = {}
     if cookie:
@@ -395,6 +450,8 @@ def fetch_dynamics(
     settings_key = _cache_key(
         {
             "type": dynamic_type,
+            "query_mode": query_mode,
+            "target_up_mids": target_up_mids,
             "pages": pages,
             "endpoint": endpoint,
             "features": features,
@@ -409,12 +466,17 @@ def fetch_dynamics(
         collected = load_cache(settings_key, cache_ttl)
 
     if not collected:
+        raw_mode = (query_mode or "all").strip().lower()
+        if raw_mode == "single_up":
+            raw_mode = "selected_up"
+        target_mid_set = {x.strip() for x in str(target_up_mids or "").replace(";", ",").split(",") if x.strip()}
+        use_selected_up = raw_mode == "selected_up" and bool(target_mid_set)
         offset = ""
         baseline = ""
         durations: List[float] = []
         for page in range(1, pages + 1):
             start_time = time.time()
-            data = fetch_page(
+            data = _fetch_page_with_retry(
                 session=session,
                 endpoint=endpoint,
                 dynamic_type=dynamic_type,
@@ -423,6 +485,9 @@ def fetch_dynamics(
                 features=features,
                 web_location=web_location,
                 timeout=timeout,
+                retries=request_retries,
+                retry_backoff=request_retry_backoff,
+                retry_factor=request_retry_factor,
             )
             durations.append(time.time() - start_time)
 
@@ -441,9 +506,11 @@ def fetch_dynamics(
             min_ts = 0
             for item in items:
                 info = extract_item(item)
-                page_infos.append(info)
                 if info.get("pub_ts"):
                     min_ts = info["pub_ts"] if min_ts == 0 else min(min_ts, info["pub_ts"])
+                if use_selected_up and str(info.get("user_mid") or "") not in target_mid_set:
+                    continue
+                page_infos.append(info)
             collected.extend(page_infos)
 
             avg = sum(durations) / len(durations)
@@ -463,7 +530,8 @@ def fetch_dynamics(
                 if ans == "q":
                     break
 
-            time.sleep(0.2)
+            if page < pages and request_interval > 0:
+                time.sleep(request_interval)
 
         if use_cache and collected:
             save_cache(settings_key, collected)

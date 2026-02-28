@@ -11,6 +11,7 @@ A prompt_toolkit-based TUI tool that fetches, filters, sorts, and summarizes per
 - Time range filter (custom / last 24 hours / 7 days / 30 days / 365 days / this year / unlimited)
 - Keyword filter (space-separated terms, AND logic)
 - Sort followed UPs by dynamic count (ascending/descending)
+- Keyword search in UP selector (name / mid)
 - Summary/detail list mode
 - Paginated dynamic browsing
 - Local cache with TTL
@@ -67,8 +68,10 @@ python BiliDynamicSummary.py --sessdata "YOUR_SESSDATA"
 2. Choose **Edit Settings** (optional)
 3. Choose **Start Fetch**
 4. In **Select UP**, pick the UP you want to inspect
-5. Browse that UP's dynamic list with pagination and detail view
-6. In that UP list, choose **AI Summary** to view summary + linked dynamics
+5. In **Select UP**, use **[Set selected_up targets]** to quickly write `target_up_mids` and switch mode
+   In the target picker, you can choose **[Skip and back to settings]** to exit this auto-selection flow.
+6. Browse that UP's dynamic list with pagination and detail view
+7. In that UP list, choose **AI Summary** to view summary + linked dynamics
 
 ## Keyboard
 - Arrow keys: move selection
@@ -116,6 +119,31 @@ Cache files are stored in `cache/`. You can configure in TUI or `config.json`:
   "cache": true,
   "cache_ttl_minutes": 60,
   "auto_save_auth": false,
+  "defaults": {
+    "type": "all",
+    "query_mode": "all",
+    "target_up_mid": "",
+    "target_up_mids": "",
+    "up_filter_keyword": "",
+    "pages": 5,
+    "interactive": false,
+    "endpoint": "https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all",
+    "features": "itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard,onlyfansAssetsV2,forwardListHidden,ugcDelete",
+    "web_location": "333.1365",
+    "timeout_seconds": 10,
+    "time_from": "",
+    "time_to": "",
+    "sort": "desc",
+    "view": "summary",
+    "page_size": 10,
+    "keyword": ""
+  },
+  "fetch": {
+    "request_interval_seconds": 0.2,
+    "max_retries": 2,
+    "retry_backoff_seconds": 0.8,
+    "retry_backoff_factor": 2.0
+  },
   "summary": {
     "provider": "local",
     "api_mode": "chat_completions",
@@ -138,6 +166,26 @@ Cache files are stored in `cache/`. You can configure in TUI or `config.json`:
 - `cache`: `true` or `false`, controls local cache read/write.
 - `cache_ttl_minutes`: cache validity in minutes; `<= 0` means no expiration check.
 - `auto_save_auth`: auto-write latest `cookie`/`sessdata` back into `config.json` (default `false`).
+- `defaults.*`: startup defaults for TUI/CLI when related flags are not passed.
+- `defaults.type`: `all` | `video` | `pgc` | `article`.
+- `defaults.query_mode`: `all` | `selected_up` (`single_up` is also accepted for backward compatibility).
+- `defaults.target_up_mid`: legacy single target `mid` for backward compatibility.
+- `defaults.target_up_mids`: target UP `mid` list (comma-separated) used in `selected_up` mode.
+- If `query_mode=selected_up` and `target_up_mids` is empty, the app auto-fetches all followed UPs and opens a multi-select target picker (with a skip-to-settings button).
+- `defaults.up_filter_keyword`: remembered keyword filter value used in the UP selector (auto-updated by the app).
+- `defaults.pages`: default max pages to fetch.
+- `defaults.interactive`: ask before each next-page request.
+- `defaults.endpoint` / `defaults.features` / `defaults.web_location`: dynamic API request params.
+- `defaults.timeout_seconds`: HTTP timeout seconds for dynamic API requests.
+- `defaults.time_from` / `defaults.time_to`: default time range in UI/CLI.
+- `defaults.sort`: `asc` | `desc`.
+- `defaults.view`: `summary` | `detail`.
+- `defaults.page_size`: default list page size.
+- `defaults.keyword`: default keyword filter.
+- `fetch.request_interval_seconds`: sleep seconds between pages.
+- `fetch.max_retries`: retry times per page request.
+- `fetch.retry_backoff_seconds`: initial retry backoff seconds.
+- `fetch.retry_backoff_factor`: retry backoff multiplier (>= 1.0).
 - `summary.provider`: `local` | `openai` | `gemini` | `custom_openai` (OpenAI-compatible).
 - `summary.api_mode`: `chat_completions` | `responses` (OpenAI-compatible providers).
 - `summary.model`: model name, for example `gpt-4o-mini` or `gemini-1.5-flash`.
@@ -161,6 +209,8 @@ Cache files are stored in `cache/`. You can configure in TUI or `config.json`:
 }
 ```
 
+---
+
 ## CLI Options
 ```text
 --cookie         Full cookie string
@@ -168,6 +218,9 @@ Cache files are stored in `cache/`. You can configure in TUI or `config.json`:
 --dedeuserid     DedeUserID value (mid)
 --bili-jct       bili_jct value (CSRF)
 --type           all | video | pgc | article
+--query-mode     all | selected_up | single_up
+--target-up-mid  Legacy single target UP mid (compatible)
+--target-up-mids Target UP mids for selected_up mode, comma-separated
 --pages          Max pages to fetch
 --page-size      Items per page in list view
 --from           Start time (YYYY-MM-DD HH:MM)
@@ -178,6 +231,10 @@ Cache files are stored in `cache/`. You can configure in TUI or `config.json`:
 --cache          Enable cache
 --no-cache       Disable cache
 --cache-ttl      Cache TTL minutes (override config)
+--request-interval      Seconds between page requests (override config)
+--request-retries       Retry times per page request (override config)
+--request-retry-backoff Initial retry backoff seconds (override config)
+--request-retry-factor  Retry backoff factor, >=1.0 (override config)
 --auto-save-auth Enable auto-save latest cookie/sessdata
 --no-auto-save-auth Disable auto-save latest cookie/sessdata
 --summary-provider  local | openai | gemini | custom_openai

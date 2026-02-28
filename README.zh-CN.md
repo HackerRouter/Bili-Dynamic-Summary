@@ -1,4 +1,4 @@
-﻿# BiliDynamicSummary（中文说明）
+﻿# BiliDynamicSummary
 
 [English README](README.md)
 
@@ -11,6 +11,7 @@
 - 时间范围筛选（自定义 / 最近 24 小时 / 7 天 / 30 天 / 365 天 / 今年 / 不限）
 - 关键词过滤（空格分词，AND 逻辑）
 - 关注 UP 主动态数量排序（升序/降序）
+- 选择 UP 主时支持关键词筛选（名称 / mid）
 - 列表 简略/详情 模式
 - 动态列表分页浏览
 - 本地缓存 + 过期时间（TTL）
@@ -66,8 +67,10 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 2. 选择 **编辑设置**（可选）
 3. 选择 **开始检索**
 4. 在 **选择 UP 主** 列表中选中你要查看的 UP 主动态
-5. 进入动态列表分页浏览，可以选择查看详情
-6. 在你查看的 UP 主 的列表页选择 **AI总结**，可查看 动态总结 和 其关联的动态
+5. 在 **选择 UP 主** 页可用 **[设为 selected_up 目标列表]** 快捷设置目标 UP（自动写入 `target_up_mids` 并切换模式）
+   在目标多选弹窗可用 **[跳过并回设置页]** 直接退出本次自动选择
+6. 进入动态列表分页浏览，可以选择查看详情
+7. 在你查看的 UP 主 的列表页选择 **AI 总结**，可查看 动态总结 和 其关联的动态
 
 ## 快捷键
 - 方向键：选择
@@ -114,6 +117,31 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
   "cache": true,
   "cache_ttl_minutes": 60,
   "auto_save_auth": false,
+  "defaults": {
+    "type": "all",
+    "query_mode": "all",
+    "target_up_mid": "",
+    "target_up_mids": "",
+    "up_filter_keyword": "",
+    "pages": 5,
+    "interactive": false,
+    "endpoint": "https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all",
+    "features": "itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard,onlyfansAssetsV2,forwardListHidden,ugcDelete",
+    "web_location": "333.1365",
+    "timeout_seconds": 10,
+    "time_from": "",
+    "time_to": "",
+    "sort": "desc",
+    "view": "summary",
+    "page_size": 10,
+    "keyword": ""
+  },
+  "fetch": {
+    "request_interval_seconds": 0.2,
+    "max_retries": 2,
+    "retry_backoff_seconds": 0.8,
+    "retry_backoff_factor": 2.0
+  },
   "summary": {
     "provider": "local",
     "api_mode": "chat_completions",
@@ -136,6 +164,26 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 - `cache`：`true` 或 `false`。控制是否读写本地缓存
 - `cache_ttl_minutes`：缓存有效期（分钟），`<= 0` 表示不做过期判断
 - `auto_save_auth`：自动把最新 `cookie`/`sessdata` 写回 `config.json`（默认 `false`）
+- `defaults.*`：当未传对应命令行参数时，作为 TUI/CLI 的启动默认值
+- `defaults.type`：`all` | `video` | `pgc` | `article`
+- `defaults.query_mode`：`all` | `selected_up`（向后兼容 `single_up`）
+- `defaults.target_up_mid`：旧版单一目标 `mid`，仅用于兼容
+- `defaults.target_up_mids`：`selected_up` 模式目标 UP 列表（逗号分隔）
+- 当 `query_mode=selected_up` 且 `target_up_mids` 为空时，程序会自动先检索全部关注 UP，并弹出目标 UP 多选（可用 `[跳过并回设置页]` 退出）。
+- `defaults.up_filter_keyword`：选择 UP 主界面的关键词筛选记忆值（程序会自动更新）
+- `defaults.pages`：默认最大抓取页数
+- `defaults.interactive`：抓下一页前是否询问
+- `defaults.endpoint` / `defaults.features` / `defaults.web_location`：动态接口请求参数
+- `defaults.timeout_seconds`：动态接口超时秒数
+- `defaults.time_from` / `defaults.time_to`：默认时间范围
+- `defaults.sort`：`asc` | `desc`
+- `defaults.view`：`summary` | `detail`
+- `defaults.page_size`：默认列表每页条数
+- `defaults.keyword`：默认关键词过滤
+- `fetch.request_interval_seconds`：分页请求间隔秒数
+- `fetch.max_retries`：单页请求失败重试次数
+- `fetch.retry_backoff_seconds`：首次重试退避秒数
+- `fetch.retry_backoff_factor`：重试退避倍数（>= 1.0）
 - `summary.provider`：`local` | `openai` | `gemini` | `custom_openai` （OpenAI 兼容）
 - `summary.api_mode`：`chat_completions` | `responses`（OpenAI 兼容提供方）
 - `summary.model`：对应提供方模型名，例如 `gpt-4o-mini`、`gemini-1.5-flash`
@@ -159,13 +207,18 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 }
 ```
 
-## 命令行参数
+---
+
+## CLI 命令行参数
 ```text
 --cookie         完整 Cookie 字符串
 --sessdata       SESSDATA 值
 --dedeuserid     DedeUserID 值（mid）
 --bili-jct       bili_jct 值（CSRF）
 --type           all | video | pgc | article
+--query-mode     all | selected_up | single_up
+--target-up-mid  兼容旧版的单目标 UP mid
+--target-up-mids selected_up 模式目标 UP mids（逗号分隔）
 --pages          最大翻页数
 --page-size      列表每页条数
 --from           起始时间（YYYY-MM-DD HH:MM）
@@ -176,6 +229,10 @@ python BiliDynamicSummary.py --sessdata "你的 SESSDATA"
 --cache          开启缓存
 --no-cache       关闭缓存
 --cache-ttl      缓存有效期（分钟，覆盖 config）
+--request-interval      分页请求间隔秒数（覆盖 config）
+--request-retries       单页请求失败重试次数（覆盖 config）
+--request-retry-backoff 首次重试退避秒数（覆盖 config）
+--request-retry-factor  重试退避倍数，>=1.0（覆盖 config）
 --auto-save-auth 开启自动保存最新 cookie/sessdata
 --no-auto-save-auth 关闭自动保存最新 cookie/sessdata
 --summary-provider  local | openai | gemini | custom_openai

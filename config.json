@@ -6,6 +6,31 @@
   "cache": true,
   "cache_ttl_minutes": 60,
   "auto_save_auth": false,
+  "defaults": {
+    "type": "all",
+    "query_mode": "all",
+    "target_up_mid": "",
+    "target_up_mids": "",
+    "up_filter_keyword": "",
+    "pages": 20,
+    "interactive": false,
+    "endpoint": "https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all",
+    "features": "itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard,onlyfansAssetsV2,forwardListHidden,ugcDelete",
+    "web_location": "333.1365",
+    "timeout_seconds": 10,
+    "time_from": "",
+    "time_to": "",
+    "sort": "desc",
+    "view": "summary",
+    "page_size": 10,
+    "keyword": ""
+  },
+  "fetch": {
+    "request_interval_seconds": 0.1,
+    "max_retries": 2,
+    "retry_backoff_seconds": 0.8,
+    "retry_backoff_factor": 2.0
+  },
   "summary": {
     "provider": "local",
     "api_mode": "chat_completions",
